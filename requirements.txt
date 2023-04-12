@@ -9,3 +9,5 @@ optuna~=3.1.0
 torch~=2.0.0
 numpy~=1.23.5
 Pillow~=9.5.0
+tensorboard
+rich

@@ -6,15 +6,9 @@ import numpy as np
 from tetris_gym.utils.board_utils import get_heights, get_bumps_from_heights
 
 
-def normalize(number, max_value: int | float, min_value: int | float = 0):
-    if max_value - min_value == 0:
-        return 0
-    return (number - min_value) / (max_value - min_value)
-
-
 class ExtendedObservationWrapper(gym.ObservationWrapper, gym.RewardWrapper):
 
-    def __init__(self, env):
+    def __init__(self, env, default_reward: bool = True):
         super().__init__(env)
 
         self.observation_space = spaces.Dict({
@@ -33,30 +27,35 @@ class ExtendedObservationWrapper(gym.ObservationWrapper, gym.RewardWrapper):
                 dtype=int,
             )
         })
+        self._default_reward: bool = default_reward
 
     def reward(self, reward):
-        # Implement your custom reward calculation here
-        # For example, you can use the 'heights' and 'bumps' information from the observation
-        # to calculate a reward based on the current state of the board
 
+        final_reward: float = 0
+
+        final_reward += (self.env.check_cleared_rows(self.env.board)[0] ** 4) * self.env.width
+
+        if self.env.gameover:
+            final_reward -= 1
+        else:
+            final_reward += 1
+
+        if not self._default_reward:
+            final_reward += self.custom_reward()  # We add it as this function is return a penalty
+
+        return final_reward
+
+    def custom_reward(self):
+        final_penalty: float = 0
         obs = self.observation(self.env.get_observations())
         heights = obs["heights"]
         bumps = obs["bumps"]
 
-        reward_cleared_rows = (self.env.check_cleared_rows(self.env.board)[0] ** 4) * self.env.width
+        final_penalty -= np.max(heights) / 500  # Penalty for heights
+        final_penalty -= np.max(np.abs(bumps)) / 500  # Penalty for bumps
+        final_penalty -= self.env.get_holes(obs["board"]) / 500  # Penalty for holes
 
-        penalty_heights = np.max(heights) / 500
-
-        penalty_bumps = np.max(np.abs(bumps)) / 500
-
-        if self.env.gameover:
-            is_game_over = -1
-        else:
-            is_game_over = 1
-
-        penalty_holes = self.env.get_holes(obs["board"]) / 500
-
-        return reward_cleared_rows + is_game_over# - penalty_heights - penalty_holes - penalty_holes
+        return final_penalty
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
@@ -83,20 +82,8 @@ class ExtendedObservationWrapper(gym.ObservationWrapper, gym.RewardWrapper):
 
         return obs
 
-
-class HeightsObservationWrapper(gym.ObservationWrapper):
-    def __init__(self, env):
-        super().__init__(env)
-
-        self.observation_space = spaces.Dict({
-            "heights": env.observation_space["heights"],
-            "bumps": env.observation_space["bumps"],
-            "piece": env.observation_space["piece"]
-        })
-
-    def observation(self, obs):
-        return {
-            "heights": obs["heights"],
-            "bumps": obs["bumps"],
-            "piece": obs["piece"]
-        }
+    @staticmethod
+    def normalize(number, max_value: int | float, min_value: int | float = 0):
+        if max_value - min_value == 0:
+            return 0
+        return (number - min_value) / (max_value - min_value)
