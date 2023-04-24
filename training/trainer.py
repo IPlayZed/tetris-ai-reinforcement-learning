@@ -55,10 +55,10 @@ class Trainer:
         print(f"Using network:\n{self._model.policy}")
 
     @staticmethod
-    def lr_schedule_exp_decay(initial_value: float = 0.00035, rate: float = 1.1):
+    def lr_schedule_exp_decay(initial_value: float = 5e-4, rate: float = 1.01):
         """
         Learning rate schedule:
-            Exponential decay by factors of 10
+            Exponential decay by factors of 2
 
         :param initial_value: Initial learning rate.
         :param rate: Exponential rate of decay. High values mean fast early drop in LR
@@ -74,9 +74,9 @@ class Trainer:
             :return: current learning rate
             """
             if progress_remaining <= 0:
-                return 1e-9
+                return 3e-4
 
-            return initial_value * 10 ** (rate * log(progress_remaining))
+            return initial_value * 2 ** (rate * log(progress_remaining))
 
         return func
 

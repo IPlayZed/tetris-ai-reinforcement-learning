@@ -1,14 +1,41 @@
+import gym
 from stable_baselines3 import PPO
 
-from agent.agent import Agent
 from tetris_gym.envs.tetris_gym import TetrisGym
-from tetris_gym.utils.eval_utils import evaluate_agent, create_videos
-
-# Környezet létrehozása
-env = TetrisGym(width=10, height=20, seed=812468)
+from tetris_gym.utils.eval_utils import evaluate_agent
+from tetris_gym.wrappers.observation import ExtendedObservationWrapper
 
 
-agent = Agent(env)
+def get_eval_env(seed=42) -> TetrisGym:
+    return TetrisGym(width=10, height=20, seed=seed)
 
-print(evaluate_agent(env, agent, 100))
 
+class Agent:
+    """
+    This agent was created for evaluating the
+    """
+
+    def __init__(self, evaluation_environment: gym.Env = get_eval_env(),
+                 model_load_path: str = "model.zip") -> None:
+        self._model_path: str = model_load_path
+        self._model = PPO.load(self._model_path)
+        self._wrapper: gym.Wrapper = ExtendedObservationWrapper(evaluation_environment, False)
+
+    def act(self, observation):
+        """
+        Based on the observation, it returns the next step. This function will give the agent's function.
+
+        Args:
+            observation: The observation from the environment.
+
+        Returns:
+            The model's action and the next hidden state (used in recurrent policies).
+        """
+
+        return self._model.predict(self._wrapper.observation(observation), deterministic=True)
+
+
+if __name__ == '__main__':
+    agent = Agent(model_load_path="autosave_618000000_steps.zip")
+
+    print(evaluate_agent(get_eval_env(), agent, 100))

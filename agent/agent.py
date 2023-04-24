@@ -1,6 +1,12 @@
 import gym
 from stable_baselines3 import PPO
-from tetris_gym.wrappers.observation import ExtendedObservationWrapper
+
+from agent.observation import ExtendedObservationWrapper
+from tetris_gym.envs.tetris_gym import TetrisGym
+
+
+def get_eval_env(seed=42) -> TetrisGym:
+    return TetrisGym(width=10, height=20, seed=seed)
 
 
 class Agent:
@@ -8,10 +14,11 @@ class Agent:
     This agent was created for evaluating the
     """
 
-    def __init__(self, env: gym.Env) -> None:
-        self._model_path: str = "agent/fml.zip"
+    def __init__(self, evaluation_environment: gym.Env = get_eval_env(),
+                 model_load_path: str = "model.zip") -> None:
+        self._model_path: str = model_load_path
         self._model = PPO.load(self._model_path)
-        self._wrapper: gym.Wrapper = ExtendedObservationWrapper(env)
+        self._wrapper: gym.Wrapper = ExtendedObservationWrapper(evaluation_environment, False)
 
     def act(self, observation):
         """
@@ -24,10 +31,4 @@ class Agent:
             The model's action and the next hidden state (used in recurrent policies).
         """
 
-        # If we modified the observations when teaching, we must also provide that modification at the time of
-        # evaluation.
-        wrapped_observation = self._wrapper.observation(observation)
-
-        return self._model.predict(wrapped_observation, deterministic=True)
-
-
+        return self._model.predict(self._wrapper.observation(observation), deterministic=True)

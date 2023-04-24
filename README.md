@@ -182,7 +182,7 @@ A kész ágenst az [evaluate.py](agent/evaluate_agent.py) fájl segítségével 
 python evaluate_agent.py
 ```
 
-A modellt feltöltheted a HuggingFace-re a [upload.py](agent/upload.py) fájl segítségével.
+A modellt feltöltheted a HuggingFace-re a [upload.py](upload.py) fájl segítségével.
 
 Ehhez viszont először meg kell adnod a fájlban a létrehozni (vagy felülírni) kívánt repository nevét. Illetve a Hugging Face tokenedet. Ezt az alábbi helyen tudod létrehozni a Hugging Face-en belül: [Settings/Access Tokens](https://huggingface.co/settings/token)
 
